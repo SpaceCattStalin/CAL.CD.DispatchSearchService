@@ -137,7 +137,7 @@ public class DispatchSearchQueryBuilderTests
 
         var wildcard = GetSingleClause(result.Query).Wildcard;
         Assert.NotNull(wildcard);
-        Assert.Equal("d => d.Vehicle.Vin", wildcard!.Field!.Expression!.ToString());
+        Assert.Equal("vehicles.vin", wildcard!.Field!.Name);
         Assert.Equal("*1HGCM82*", wildcard.Value);
         Assert.True(wildcard.CaseInsensitive);
     }

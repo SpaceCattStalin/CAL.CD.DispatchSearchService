@@ -23,7 +23,7 @@ public class DispatchIndexInitializer(IOpenSearchClient client, IOptions<OpenSea
                     .Date(dt => dt.Name(d => d.PickupDate))
                     .Date(dt => dt.Name(d => d.DropoffDate))
                     .Object<VehicleModel>(o => o
-                        .Name(d => d.Vehicle)
+                        .Name(d => d.Vehicles)
                         .Properties(vp => vp
                             .Keyword(k => k.Name(v => v.Vin)))))), ct);
     }

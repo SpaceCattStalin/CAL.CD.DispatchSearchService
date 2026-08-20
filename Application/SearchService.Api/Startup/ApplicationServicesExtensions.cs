@@ -16,7 +16,7 @@ public static class ApplicationServicesExtensions
         services.AddScoped<IDispatchIndexService, DispatchIndexService>();
         services.AddScoped<IDispatchSearchService, DispatchSearchService>();
 
-        services.AddScoped<IValidator<DispatchModel>, DispatchModelValidator>();
+        services.AddScoped<IValidator<DispatchWriterEvent>, DispatchWriterEventValidator>();
         services.AddScoped<IValidator<DispatchSearchRequestModel>, DispatchSearchRequestModelValidator>();
 
         return services;

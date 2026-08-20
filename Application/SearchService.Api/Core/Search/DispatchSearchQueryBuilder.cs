@@ -69,7 +69,7 @@ public class DispatchSearchQueryBuilder : IDispatchSearchQueryBuilder
             // Add query clause (WildcardQuery from OpenSearch.Client) to clauses
             clauses.Add(new WildcardQuery
             {
-                Field = Infer.Field<DispatchModel, string>(d => d.Vehicle.Vin),
+                Field = "vehicles.vin",
                 Value = $"*{request.VehicleVin}*",
                 CaseInsensitive = true
             });

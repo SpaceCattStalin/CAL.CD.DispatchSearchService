@@ -35,7 +35,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"dispatchId\": \"{{dispatchId}}\",\n  \"priceTotal\": 1500.50,\n  \"pickupDate\": \"2026-08-01T00:00:00Z\",\n  \"dropoffDate\": \"2026-08-05T00:00:00Z\",\n  \"dispatchStatus\": \"Delivered\",\n  \"vehicle\": {\n    \"vin\": \"1HGCM82633A004352\"\n  }\n}"
+							"raw": "{\n  \"type\": \"Create\",\n  \"dispatchId\": \"{{dispatchId}}\",\n  \"priceTotal\": 1500.50,\n  \"pickupDate\": \"2026-08-01T00:00:00Z\",\n  \"dropoffDate\": \"2026-08-05T00:00:00Z\",\n  \"dispatchStatus\": \"Delivered\",\n  \"vehicles\": [\n    {\n      \"vin\": \"1HGCM82633A004352\"\n    }\n  ]\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/dispatch",

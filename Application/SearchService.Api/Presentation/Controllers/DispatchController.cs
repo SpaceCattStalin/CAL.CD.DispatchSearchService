@@ -11,17 +11,17 @@ namespace SearchService.Api.Presentation.Controllers;
 public class DispatchController(
     IDispatchIndexService indexService,
     IDispatchSearchService searchService,
-    IValidator<DispatchModel> dispatchValidator,
+    IValidator<DispatchWriterEvent> dispatchEventValidator,
     IValidator<DispatchSearchRequestModel> searchValidator) : ControllerBase
 {
     [HttpPost]
-    public async Task<IActionResult> Post([FromBody] DispatchModel dispatch)
+    public async Task<IActionResult> Post([FromBody] DispatchWriterEvent dispatchEvent)
     {
-        var validation = await dispatchValidator.ValidateAsync(dispatch);
+        var validation = await dispatchEventValidator.ValidateAsync(dispatchEvent);
         if (!validation.IsValid)
             return BadRequest(validation.Errors);
 
-        var result = await indexService.IndexAsync(dispatch);
+        var result = await indexService.IndexAsync(dispatchEvent.ToDispatchModel());
         return result.success
             ? Ok(new { result.Id })
             : Problem(result.Error);
