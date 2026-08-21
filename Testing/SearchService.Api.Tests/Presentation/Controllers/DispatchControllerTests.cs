@@ -1,6 +1,7 @@
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using SearchService.Api.Core.Interfaces;
 using SearchService.Api.Models;
@@ -16,12 +17,13 @@ public class DispatchControllerTests
     private readonly Mock<IDispatchSearchService> _searchService = new();
     private readonly Mock<IValidator<DispatchWriterEvent>> _dispatchEventValidator = new();
     private readonly Mock<IValidator<DispatchSearchRequestModel>> _searchValidator = new();
-
+    private readonly ILogger<DispatchController> _logger;
     private DispatchController CreateController() => new(
         _indexService.Object,
         _searchService.Object,
         _dispatchEventValidator.Object,
-        _searchValidator.Object);
+        _searchValidator.Object,
+        _logger);
 
     private static object GetValue(IActionResult result) => ((ObjectResult)result).Value!;
 
@@ -128,10 +130,12 @@ public class DispatchControllerTests
     public async Task Search_ValidRequest_ReturnsOkWithResults()
     {
         var request = new DispatchSearchRequestModel { DispatchStatus = "Delivered" };
-        var response = new DispatchSearchResponseModel { Total = 1, Page = 1, PageSize = 20, Items = [new DispatchModel()] };
+        var response = new[] { Guid.NewGuid() };
+
         _searchValidator
             .Setup(v => v.ValidateAsync(request, default))
             .ReturnsAsync(new ValidationResult());
+
         _searchService
             .Setup(s => s.SearchAsync(request))
             .ReturnsAsync(response);

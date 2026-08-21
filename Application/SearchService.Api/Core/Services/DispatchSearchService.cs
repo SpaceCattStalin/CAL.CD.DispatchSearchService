@@ -14,17 +14,11 @@ public class DispatchSearchService(
 {
     private readonly string _indexName = options.Value.IndexName;
 
-    public async Task<DispatchSearchResponseModel> SearchAsync(DispatchSearchRequestModel request)
+    public async Task<IEnumerable<Guid>> SearchAsync(DispatchSearchRequestModel request)
     {
         var searchRequest = queryBuilder.BuildOpenSearchRequest(request, _indexName);
         var response = await client.SearchAsync<DispatchModel>(searchRequest);
 
-        return new DispatchSearchResponseModel
-        {
-            Total = response.Total,
-            Page = Math.Max(1, request.Page),
-            PageSize = Math.Clamp(request.PageSize, 1, 100),
-            Items = response.Documents.ToList()
-        };
+        return response.Documents.Select(d => d.DispatchId);
     }
 }

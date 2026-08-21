@@ -12,7 +12,8 @@ public class DispatchController(
     IDispatchIndexService indexService,
     IDispatchSearchService searchService,
     IValidator<DispatchWriterEvent> dispatchEventValidator,
-    IValidator<DispatchSearchRequestModel> searchValidator) : ControllerBase
+    IValidator<DispatchSearchRequestModel> searchValidator,
+    ILogger<DispatchController> logger) : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] DispatchWriterEvent dispatchEvent)
@@ -21,7 +22,11 @@ public class DispatchController(
         if (!validation.IsValid)
             return BadRequest(validation.Errors);
 
+        logger.LogInformation("Incoming request at {Time}. With Id: {DispatchId}", DateTime.UtcNow, dispatchEvent.DispatchId);
+
         var result = await indexService.IndexAsync(dispatchEvent.ToDispatchModel());
+        logger.LogInformation("Request success? {Result}", result);
+
         return result.success
             ? Ok(new { result.Id })
             : Problem(result.Error);
