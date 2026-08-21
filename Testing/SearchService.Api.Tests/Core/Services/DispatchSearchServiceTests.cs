@@ -31,7 +31,7 @@ public class DispatchSearchServiceTests
     """;
 
     [Fact]
-    public async Task SearchAsync_MapsOpenSearchResponseIntoResponseModel()
+    public async Task SearchAsync_ReturnsDispatchIdsFromOpenSearchResponse()
     {
         var client = MockOpenSearchClientFactory.Create(SearchResponseJson, 200);
         var queryBuilder = new Mock<IDispatchSearchQueryBuilder>();
@@ -39,14 +39,13 @@ public class DispatchSearchServiceTests
             .Setup(b => b.BuildOpenSearchRequest(It.IsAny<DispatchSearchRequestModel>(), It.IsAny<string>()))
             .Returns(new SearchRequest<DispatchModel>("dispatches"));
         var sut = new DispatchSearchService(client, queryBuilder.Object, Options());
-        var request = new DispatchSearchRequestModel { Page = 1, PageSize = 20 };
+        var request = new DispatchSearchRequestModel();
 
-        var response = await sut.SearchAsync(request);
+        var response = (await sut.SearchAsync(request)).ToList();
 
-        Assert.Equal(5, response.Total);
-        Assert.Equal(2, response.Items.Count);
-        Assert.Contains(response.Items, d => d.DispatchId == Guid.Parse("11111111-1111-1111-1111-111111111111"));
-        Assert.Contains(response.Items, d => d.DispatchId == Guid.Parse("22222222-2222-2222-2222-222222222222"));
+        Assert.Equal(2, response.Count);
+        Assert.Contains(Guid.Parse("11111111-1111-1111-1111-111111111111"), response);
+        Assert.Contains(Guid.Parse("22222222-2222-2222-2222-222222222222"), response);
     }
 
     [Fact]
@@ -63,26 +62,5 @@ public class DispatchSearchServiceTests
         await sut.SearchAsync(request);
 
         queryBuilder.Verify(b => b.BuildOpenSearchRequest(request, "dispatches"), Times.Once);
-    }
-
-    [Theory]
-    [InlineData(0, 20, 1, 20)]
-    [InlineData(1, 0, 1, 1)]
-    [InlineData(1, 500, 1, 100)]
-    [InlineData(3, 50, 3, 50)]
-    public async Task SearchAsync_ClampsPageAndPageSizeInResponse(int page, int pageSize, int expectedPage, int expectedPageSize)
-    {
-        var client = MockOpenSearchClientFactory.Create(SearchResponseJson, 200);
-        var queryBuilder = new Mock<IDispatchSearchQueryBuilder>();
-        queryBuilder
-            .Setup(b => b.BuildOpenSearchRequest(It.IsAny<DispatchSearchRequestModel>(), It.IsAny<string>()))
-            .Returns(new SearchRequest<DispatchModel>("dispatches"));
-        var sut = new DispatchSearchService(client, queryBuilder.Object, Options());
-        var request = new DispatchSearchRequestModel { Page = page, PageSize = pageSize };
-
-        var response = await sut.SearchAsync(request);
-
-        Assert.Equal(expectedPage, response.Page);
-        Assert.Equal(expectedPageSize, response.PageSize);
     }
 }

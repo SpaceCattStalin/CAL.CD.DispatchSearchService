@@ -11,6 +11,4 @@ public class DispatchSearchRequestModel
     public DateTime? DropoffDateTo { get; set; }
     public string? DispatchStatus { get; set; }
     public string? VehicleVin { get; set; }
-    public int Page { get; set; } = 1;
-    public int PageSize { get; set; } = 20;
 }
