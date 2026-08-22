@@ -18,6 +18,7 @@ public static class ApplicationServicesExtensions
 
         services.AddScoped<IValidator<DispatchWriterEvent>, DispatchWriterEventValidator>();
         services.AddScoped<IValidator<DispatchSearchRequestModel>, DispatchSearchRequestModelValidator>();
+        services.AddScoped<IValidator<DispatchUpdateEvent>, DispatchUpdateEventValidator>();
 
         return services;
     }

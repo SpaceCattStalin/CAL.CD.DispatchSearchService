@@ -14,6 +14,8 @@ public class DispatchIndexInitializer(IOpenSearchClient client, IOptions<OpenSea
         if (exists.Exists)
             return;
 
+
+        // can add .Dynamic(DynamicMapping.Strict) to reject any unmapped field when upsert an document
         await client.Indices.CreateAsync(_indexName, c => c
             .Map<DispatchModel>(m => m
                 .Properties(p => p

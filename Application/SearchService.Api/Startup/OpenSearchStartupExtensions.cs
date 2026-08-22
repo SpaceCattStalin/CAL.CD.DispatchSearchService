@@ -17,7 +17,14 @@ public static class OpenSearchStartupExtensions
             var connectionSettings = new ConnectionSettings(new Uri(options.Uri))
                 .DefaultIndex(options.IndexName)
                 .ServerCertificateValidationCallback((o, cert, chain, errors) => true)
-                .BasicAuthentication(options.Username, options.Password);
+                .BasicAuthentication(options.Username, options.Password)
+                .DisableDirectStreaming()
+                .OnRequestCompleted(apiCall =>
+                {
+                    Console.WriteLine($"{apiCall.HttpMethod} {apiCall.Uri}");
+                    if (apiCall.RequestBodyInBytes is not null)
+                        Console.WriteLine(System.Text.Encoding.UTF8.GetString(apiCall.RequestBodyInBytes));
+                });
 
             return new OpenSearchClient(connectionSettings);
         });
