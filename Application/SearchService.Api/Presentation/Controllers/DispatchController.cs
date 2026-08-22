@@ -11,17 +11,23 @@ namespace SearchService.Api.Presentation.Controllers;
 public class DispatchController(
     IDispatchIndexService indexService,
     IDispatchSearchService searchService,
-    IValidator<DispatchModel> dispatchValidator,
-    IValidator<DispatchSearchRequestModel> searchValidator) : ControllerBase
+    IValidator<DispatchWriterEvent> dispatchEventValidator,
+    IValidator<DispatchUpdateEvent> dispatchUpdateEventValidator,
+    IValidator<DispatchSearchRequestModel> searchValidator,
+    ILogger<DispatchController> logger) : ControllerBase
 {
     [HttpPost]
-    public async Task<IActionResult> Post([FromBody] DispatchModel dispatch)
+    public async Task<IActionResult> Post([FromBody] DispatchWriterEvent dispatchEvent)
     {
-        var validation = await dispatchValidator.ValidateAsync(dispatch);
+        var validation = await dispatchEventValidator.ValidateAsync(dispatchEvent);
         if (!validation.IsValid)
             return BadRequest(validation.Errors);
 
-        var result = await indexService.IndexAsync(dispatch);
+        logger.LogInformation("Incoming request at {Time}. With Id: {DispatchId}", DateTime.UtcNow, dispatchEvent.DispatchId);
+
+        var result = await indexService.IndexAsync(dispatchEvent.ToDispatchModel());
+        logger.LogInformation("Request success? {Result}", result);
+
         return result.success
             ? Ok(new { result.Id })
             : Problem(result.Error);
@@ -47,5 +53,20 @@ public class DispatchController(
 
         var response = await searchService.SearchAsync(request);
         return Ok(response);
+    }
+
+    [HttpPut]
+    public async Task<IActionResult> Update([FromBody] DispatchUpdateEvent dispatchEvent)
+    {
+        var validation = await dispatchUpdateEventValidator.ValidateAsync(dispatchEvent);
+        if (!validation.IsValid)
+            return BadRequest(validation.Errors);
+
+        logger.LogInformation("Incoming request at {Time}. With Id: {DispatchId}", DateTime.UtcNow, dispatchEvent.DispatchId);
+
+        var result = indexService.UpdateAsync(dispatchEvent.ToDispatchModel());
+        logger.LogInformation("Request success? {Result}", result);
+
+        return NoContent();
     }
 }

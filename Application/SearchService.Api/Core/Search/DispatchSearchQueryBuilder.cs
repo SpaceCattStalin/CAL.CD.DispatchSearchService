@@ -69,7 +69,7 @@ public class DispatchSearchQueryBuilder : IDispatchSearchQueryBuilder
             // Add query clause (WildcardQuery from OpenSearch.Client) to clauses
             clauses.Add(new WildcardQuery
             {
-                Field = Infer.Field<DispatchModel, string>(d => d.Vehicle.Vin),
+                Field = "vehicles.vin",
                 Value = $"*{request.VehicleVin}*",
                 CaseInsensitive = true
             });
@@ -77,14 +77,10 @@ public class DispatchSearchQueryBuilder : IDispatchSearchQueryBuilder
         // If no queries (clauses) are provided return all indexes, if yes return only indexes that contain provided queries (clauses)
         QueryContainer query = clauses.Count == 0 ? new MatchAllQuery() : new BoolQuery { Must = clauses };
 
-        var page = Math.Max(1, request.Page);
-        var pageSize = Math.Clamp(request.PageSize, 1, 100);
 
         return new SearchRequest<DispatchModel>(indexName)
         {
-            Query = query,
-            From = (page - 1) * pageSize,
-            Size = pageSize
+            Query = query
         };
     }
 }

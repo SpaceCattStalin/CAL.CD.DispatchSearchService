@@ -21,8 +21,5 @@ public class DispatchSearchRequestModelValidator : AbstractValidator<DispatchSea
             .GreaterThanOrEqualTo(r => r.DropoffDateFrom!.Value)
             .When(r => r.DropoffDateFrom.HasValue && r.DropoffDateTo.HasValue)
             .WithMessage("DropoffDateTo must be on or after DropoffDateFrom.");
-
-        RuleFor(r => r.Page).GreaterThanOrEqualTo(1);
-        RuleFor(r => r.PageSize).InclusiveBetween(1, 100);
     }
 }

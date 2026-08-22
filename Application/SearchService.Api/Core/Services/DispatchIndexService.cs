@@ -12,8 +12,16 @@ public class DispatchIndexService(IOpenSearchClient client, IOptions<OpenSearchO
 
     public async Task<DispatchIndexResult> IndexAsync(DispatchModel dispatch)
     {
+
+        // var response = await client.IndexAsync(dispatch,
+        //     i => i.Index(_indexName).Id(dispatch.DispatchId));
+
+        // Include .Id(dispatch.DispatchId) will make the OpenSearchClient call 
+        // OpenSearch server with the PUT action. This will make the OpenSearch server to 
+        // assign the bussiness dispatch id as the document. This will allow the 
+        // later update call to perform an `upsert` 
         var response = await client.IndexAsync(dispatch,
-            i => i.Index(_indexName).Id(dispatch.DispatchId));
+                    i => i.Index(_indexName).Id(dispatch.DispatchId));
 
         return response.IsValid
             ? new DispatchIndexResult(true, response.Id, null)
@@ -31,5 +39,19 @@ public class DispatchIndexService(IOpenSearchClient client, IOptions<OpenSearchO
         return response.IsValid
             ? new DispatchDeleteResult(true, false, null)
             : new DispatchDeleteResult(false, false, response.DebugInformation);
+    }
+
+    public async Task<DispatchUpdateResult> UpdateAsync(DispatchModel dispatch)
+    {
+        // Include .Id(dispatch.DispatchId) will make the OpenSearchClient call 
+        // OpenSearch server with the PUT action. This will make the OpenSearch server to 
+        // find and update the document
+        var response = await client.IndexAsync(dispatch,
+            i => i.Index(_indexName).Id(dispatch.DispatchId));
+
+
+        return response.IsValid
+            ? new DispatchUpdateResult(true, null)
+            : new DispatchUpdateResult(false, response.DebugInformation);
     }
 }

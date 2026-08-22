@@ -137,7 +137,7 @@ public class DispatchSearchQueryBuilderTests
 
         var wildcard = GetSingleClause(result.Query).Wildcard;
         Assert.NotNull(wildcard);
-        Assert.Equal("d => d.Vehicle.Vin", wildcard!.Field!.Expression!.ToString());
+        Assert.Equal("vehicles.vin", wildcard!.Field!.Name);
         Assert.Equal("*1HGCM82*", wildcard.Value);
         Assert.True(wildcard.CaseInsensitive);
     }
@@ -159,47 +159,4 @@ public class DispatchSearchQueryBuilderTests
         Assert.Equal(3, boolQuery!.Must!.Count());
     }
 
-    [Theory]
-    [InlineData(1, 20, 0, 20)]
-    [InlineData(2, 20, 20, 20)]
-    [InlineData(3, 10, 20, 10)]
-    public void Build_Paging_ComputesFromAndSize(int page, int pageSize, int expectedFrom, int expectedSize)
-    {
-        var request = new DispatchSearchRequestModel { Page = page, PageSize = pageSize };
-
-        var result = _builder.BuildOpenSearchRequest(request, "dispatches");
-
-        Assert.Equal(expectedFrom, result.From);
-        Assert.Equal(expectedSize, result.Size);
-    }
-
-    [Fact]
-    public void Build_PageLessThanOne_ClampsFromToZero()
-    {
-        var request = new DispatchSearchRequestModel { Page = 0, PageSize = 20 };
-
-        var result = _builder.BuildOpenSearchRequest(request, "dispatches");
-
-        Assert.Equal(0, result.From);
-    }
-
-    [Fact]
-    public void Build_PageSizeAboveMax_ClampsSizeTo100()
-    {
-        var request = new DispatchSearchRequestModel { Page = 1, PageSize = 1000 };
-
-        var result = _builder.BuildOpenSearchRequest(request, "dispatches");
-
-        Assert.Equal(100, result.Size);
-    }
-
-    [Fact]
-    public void Build_PageSizeBelowMin_ClampsSizeTo1()
-    {
-        var request = new DispatchSearchRequestModel { Page = 1, PageSize = 0 };
-
-        var result = _builder.BuildOpenSearchRequest(request, "dispatches");
-
-        Assert.Equal(1, result.Size);
-    }
 }

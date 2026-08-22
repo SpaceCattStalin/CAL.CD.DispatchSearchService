@@ -1,9 +1,11 @@
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using SearchService.Api.Core.Interfaces;
 using SearchService.Api.Models;
+using SearchService.Api.Models.Enums;
 using SearchService.Api.Models.Search;
 using SearchService.Api.Presentation.Controllers;
 
@@ -13,45 +15,55 @@ public class DispatchControllerTests
 {
     private readonly Mock<IDispatchIndexService> _indexService = new();
     private readonly Mock<IDispatchSearchService> _searchService = new();
-    private readonly Mock<IValidator<DispatchModel>> _dispatchValidator = new();
+    private readonly Mock<IValidator<DispatchWriterEvent>> _dispatchEventValidator = new();
     private readonly Mock<IValidator<DispatchSearchRequestModel>> _searchValidator = new();
-
+    private readonly Mock<ILogger<DispatchController>> _logger = new();
     private DispatchController CreateController() => new(
         _indexService.Object,
         _searchService.Object,
-        _dispatchValidator.Object,
-        _searchValidator.Object);
+        _dispatchEventValidator.Object,
+        _searchValidator.Object,
+        _logger.Object);
 
     private static object GetValue(IActionResult result) => ((ObjectResult)result).Value!;
+
+    private static DispatchWriterEvent CreateEvent(Guid? dispatchId = null) => new(
+        EventType.Create,
+        dispatchId ?? Guid.NewGuid(),
+        100m,
+        DateTime.UtcNow,
+        DateTime.UtcNow.AddDays(1),
+        DispatchStatus.Delivered,
+        [new DispatchWriterVehicle("VIN1")]);
 
     [Fact]
     public async Task Post_ValidDispatch_ReturnsOkWithId()
     {
-        var dispatch = new DispatchModel { DispatchId = Guid.NewGuid(), DispatchStatus = "Delivered" };
-        _dispatchValidator
-            .Setup(v => v.ValidateAsync(dispatch, default))
+        var dispatchEvent = CreateEvent();
+        _dispatchEventValidator
+            .Setup(v => v.ValidateAsync(dispatchEvent, default))
             .ReturnsAsync(new ValidationResult());
         _indexService
-            .Setup(s => s.IndexAsync(dispatch))
-            .ReturnsAsync(new DispatchIndexResult(true, dispatch.DispatchId.ToString(), null));
+            .Setup(s => s.IndexAsync(It.Is<DispatchModel>(d => d.DispatchId == dispatchEvent.DispatchId)))
+            .ReturnsAsync(new DispatchIndexResult(true, dispatchEvent.DispatchId.ToString(), null));
 
-        var result = await CreateController().Post(dispatch);
+        var result = await CreateController().Post(dispatchEvent);
 
         var ok = Assert.IsType<OkObjectResult>(result);
         var idProperty = ok.Value!.GetType().GetProperty("Id")!.GetValue(ok.Value);
-        Assert.Equal(dispatch.DispatchId.ToString(), idProperty);
+        Assert.Equal(dispatchEvent.DispatchId.ToString(), idProperty);
     }
 
     [Fact]
     public async Task Post_InvalidDispatch_ReturnsBadRequestAndDoesNotIndex()
     {
-        var dispatch = new DispatchModel();
+        var dispatchEvent = CreateEvent();
         var failures = new List<ValidationFailure> { new("DispatchStatus", "must not be empty") };
-        _dispatchValidator
-            .Setup(v => v.ValidateAsync(dispatch, default))
+        _dispatchEventValidator
+            .Setup(v => v.ValidateAsync(dispatchEvent, default))
             .ReturnsAsync(new ValidationResult(failures));
 
-        var result = await CreateController().Post(dispatch);
+        var result = await CreateController().Post(dispatchEvent);
 
         Assert.IsType<BadRequestObjectResult>(result);
         _indexService.Verify(s => s.IndexAsync(It.IsAny<DispatchModel>()), Times.Never);
@@ -60,15 +72,15 @@ public class DispatchControllerTests
     [Fact]
     public async Task Post_IndexServiceFails_ReturnsProblem()
     {
-        var dispatch = new DispatchModel { DispatchId = Guid.NewGuid(), DispatchStatus = "Delivered" };
-        _dispatchValidator
-            .Setup(v => v.ValidateAsync(dispatch, default))
+        var dispatchEvent = CreateEvent();
+        _dispatchEventValidator
+            .Setup(v => v.ValidateAsync(dispatchEvent, default))
             .ReturnsAsync(new ValidationResult());
         _indexService
-            .Setup(s => s.IndexAsync(dispatch))
+            .Setup(s => s.IndexAsync(It.Is<DispatchModel>(d => d.DispatchId == dispatchEvent.DispatchId)))
             .ReturnsAsync(new DispatchIndexResult(false, null, "cluster unavailable"));
 
-        var result = await CreateController().Post(dispatch);
+        var result = await CreateController().Post(dispatchEvent);
 
         var problem = Assert.IsType<ObjectResult>(result);
         Assert.Equal(500, problem.StatusCode);
@@ -118,10 +130,12 @@ public class DispatchControllerTests
     public async Task Search_ValidRequest_ReturnsOkWithResults()
     {
         var request = new DispatchSearchRequestModel { DispatchStatus = "Delivered" };
-        var response = new DispatchSearchResponseModel { Total = 1, Page = 1, PageSize = 20, Items = [new DispatchModel()] };
+        var response = new[] { Guid.NewGuid() };
+
         _searchValidator
             .Setup(v => v.ValidateAsync(request, default))
             .ReturnsAsync(new ValidationResult());
+
         _searchService
             .Setup(s => s.SearchAsync(request))
             .ReturnsAsync(response);
