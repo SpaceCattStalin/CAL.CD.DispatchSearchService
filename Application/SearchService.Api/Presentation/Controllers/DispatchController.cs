@@ -62,9 +62,23 @@ public class DispatchController(
         if (!validation.IsValid)
             return BadRequest(validation.Errors);
 
-        logger.LogInformation("Incoming request at {Time}. With Id: {DispatchId}", DateTime.UtcNow, dispatchEvent.DispatchId);
+        logger.LogInformation("Incoming request at {Time} come to the PUT endpoint. With Id: {DispatchId}", DateTime.UtcNow, dispatchEvent.DispatchId);
 
         var result = indexService.UpdateAsync(dispatchEvent.ToDispatchModel());
+        logger.LogInformation("Request success? {Result}", result);
+
+        return NoContent();
+    }
+
+    [HttpPut("batch-update")]
+    public async Task<IActionResult> BatchUpdate(DispatchBatchUpdateRequest request)
+    {
+        // To do add validation for request
+
+        logger.LogInformation("Incoming request at {Time} come to the PUT endpoint.", DateTime.UtcNow);
+        logger.LogCritical("=============================================================");
+        var result = indexService.BulkUpdateAsync(request.Documents);
+
         logger.LogInformation("Request success? {Result}", result);
 
         return NoContent();
