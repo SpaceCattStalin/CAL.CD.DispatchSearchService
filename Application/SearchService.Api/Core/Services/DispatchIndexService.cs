@@ -7,9 +7,9 @@ using SearchService.Api.Models;
 
 namespace SearchService.Api;
 
-public class DispatchIndexService(IOpenSearchClient client, IOptions<OpenSearchOptions> options) : IDispatchIndexService
+public class DispatchIndexService(IOpenSearchClient client, IOptions<AppSettings> options) : IDispatchIndexService
 {
-    private readonly string _indexName = options.Value.IndexName;
+    private readonly string _indexName = options.Value.OpenSearch.IndexName;
 
     public async Task<DispatchIndexResult> IndexAsync(DispatchModel dispatch)
     {

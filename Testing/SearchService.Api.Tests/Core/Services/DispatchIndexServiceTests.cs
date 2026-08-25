@@ -8,8 +8,17 @@ namespace SearchService.Api.Tests.Core.Services;
 
 public class DispatchIndexServiceTests
 {
-    private static IOptions<OpenSearchOptions> Options() =>
-        Microsoft.Extensions.Options.Options.Create(new OpenSearchOptions { IndexName = "dispatches" });
+    private static IOptions<AppSettings> Options() =>
+        Microsoft.Extensions.Options.Options.Create(new AppSettings
+        {
+            OpenSearch = new OpenSearchSettings
+            {
+                Uri = "https://localhost:9200",
+                Username = "test",
+                Password = "test",
+                IndexName = "dispatches"
+            }
+        });
 
     [Fact]
     public async Task IndexAsync_ValidDocument_ReturnsSuccessWithId()

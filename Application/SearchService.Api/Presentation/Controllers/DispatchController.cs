@@ -74,9 +74,6 @@ public class DispatchController(
     public async Task<IActionResult> BatchUpdate(DispatchBatchUpdateRequest request)
     {
         // To do add validation for request
-
-        logger.LogInformation("Incoming request at {Time} come to the PUT endpoint.", DateTime.UtcNow);
-        logger.LogCritical("=============================================================");
         var result = indexService.BulkUpdateAsync(request.Documents);
 
         logger.LogInformation("Request success? {Result}", result);
