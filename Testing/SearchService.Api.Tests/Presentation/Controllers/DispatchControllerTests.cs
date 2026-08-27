@@ -16,12 +16,14 @@ public class DispatchControllerTests
     private readonly Mock<IDispatchIndexService> _indexService = new();
     private readonly Mock<IDispatchSearchService> _searchService = new();
     private readonly Mock<IValidator<DispatchWriterEvent>> _dispatchEventValidator = new();
+    private readonly Mock<IValidator<DispatchUpdateEvent>> _dispatchUpdateEventValidator = new();
     private readonly Mock<IValidator<DispatchSearchRequestModel>> _searchValidator = new();
     private readonly Mock<ILogger<DispatchController>> _logger = new();
     private DispatchController CreateController() => new(
         _indexService.Object,
         _searchService.Object,
         _dispatchEventValidator.Object,
+        _dispatchUpdateEventValidator.Object,
         _searchValidator.Object,
         _logger.Object);
 

@@ -44,8 +44,8 @@ public class DispatchController(
         return result.success ? NoContent() : Problem(result.Error);
     }
 
-    [HttpGet("search")]
-    public async Task<IActionResult> Search([FromQuery] DispatchSearchRequestModel request)
+    [HttpPost("search")]
+    public async Task<IActionResult> Search([FromBody] DispatchSearchRequestModel request)
     {
         var validation = await searchValidator.ValidateAsync(request);
         if (!validation.IsValid)
