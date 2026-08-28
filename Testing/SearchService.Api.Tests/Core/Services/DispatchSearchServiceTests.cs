@@ -11,8 +11,17 @@ namespace SearchService.Api.Tests.Core.Services;
 
 public class DispatchSearchServiceTests
 {
-    private static IOptions<OpenSearchOptions> Options(string indexName = "dispatches") =>
-        Microsoft.Extensions.Options.Options.Create(new OpenSearchOptions { IndexName = indexName });
+    private static IOptions<AppSettings> Options(string indexName = "dispatches") =>
+        Microsoft.Extensions.Options.Options.Create(new AppSettings
+        {
+            OpenSearch = new OpenSearchSettings
+            {
+                Uri = "https://localhost:9200",
+                Username = "test",
+                Password = "test",
+                IndexName = indexName
+            }
+        });
 
     private const string SearchResponseJson = """
     {

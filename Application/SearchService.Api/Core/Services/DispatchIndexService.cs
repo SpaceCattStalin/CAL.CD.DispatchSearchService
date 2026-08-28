@@ -1,14 +1,15 @@
 ﻿using Microsoft.Extensions.Options;
 using OpenSearch.Client;
+using SearchJobs.Api.Models;
 using SearchService.Api.Core.Interfaces;
 using SearchService.Api.Infrastructure.OpenSearch;
 using SearchService.Api.Models;
 
 namespace SearchService.Api;
 
-public class DispatchIndexService(IOpenSearchClient client, IOptions<OpenSearchOptions> options) : IDispatchIndexService
+public class DispatchIndexService(IOpenSearchClient client, IOptions<AppSettings> options) : IDispatchIndexService
 {
-    private readonly string _indexName = options.Value.IndexName;
+    private readonly string _indexName = options.Value.OpenSearch.IndexName;
 
     public async Task<DispatchIndexResult> IndexAsync(DispatchModel dispatch)
     {
@@ -53,5 +54,23 @@ public class DispatchIndexService(IOpenSearchClient client, IOptions<OpenSearchO
         return response.IsValid
             ? new DispatchUpdateResult(true, null)
             : new DispatchUpdateResult(false, response.DebugInformation);
+    }
+
+    public async Task<BulkUpdateResult> BulkUpdateAsync(List<DispatchModel> documents)
+    {
+        var response = await client.BulkAsync(i => i.Index(_indexName)
+            .UpdateMany<DispatchModel>(documents, (descriptor, doc) => descriptor
+                .Doc(doc)
+                .Id(doc.DispatchId)
+                .DocAsUpsert(true)));
+
+        var failures = response.ItemsWithErrors
+            .Select(item => new BulkItemError(Guid.Parse(item.Id), item.Error.Reason ?? "Unknown error"))
+            .ToList();
+
+        return new BulkUpdateResult(
+            documents.Count - failures.Count,
+            failures
+        );
     }
 }

@@ -6,13 +6,11 @@ namespace SearchService.Api.Startup;
 
 public static class OpenSearchStartupExtensions
 {
-    public static IServiceCollection AddOpenSearch(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddOpenSearch(this IServiceCollection services)
     {
-        services.Configure<OpenSearchOptions>(configuration.GetSection(OpenSearchOptions.SectionName));
-
         services.AddSingleton<IOpenSearchClient>(sp =>
         {
-            var options = sp.GetRequiredService<IOptions<OpenSearchOptions>>().Value;
+            var options = sp.GetRequiredService<IOptions<AppSettings>>().Value.OpenSearch;
 
             var connectionSettings = new ConnectionSettings(new Uri(options.Uri))
                 .DefaultIndex(options.IndexName)

@@ -10,9 +10,9 @@ namespace SearchService.Api;
 public class DispatchSearchService(
     IOpenSearchClient client,
     IDispatchSearchQueryBuilder queryBuilder,
-    IOptions<OpenSearchOptions> options) : IDispatchSearchService
+    IOptions<AppSettings> options) : IDispatchSearchService
 {
-    private readonly string _indexName = options.Value.IndexName;
+    private readonly string _indexName = options.Value.OpenSearch.IndexName;
 
     public async Task<IEnumerable<Guid>> SearchAsync(DispatchSearchRequestModel request)
     {

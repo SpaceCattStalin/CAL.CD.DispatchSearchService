@@ -4,9 +4,9 @@ using SearchService.Api.Models;
 
 namespace SearchService.Api.Infrastructure.OpenSearch;
 
-public class DispatchIndexInitializer(IOpenSearchClient client, IOptions<OpenSearchOptions> options)
+public class DispatchIndexInitializer(IOpenSearchClient client, IOptions<AppSettings> options)
 {
-    private readonly string _indexName = options.Value.IndexName;
+    private readonly string _indexName = options.Value.OpenSearch.IndexName;
 
     public async Task EnsureIndexAsync(CancellationToken ct = default)
     {

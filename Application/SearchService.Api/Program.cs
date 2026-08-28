@@ -1,8 +1,6 @@
-using DotNetEnv;
+using SearchService.Api;
 using SearchService.Api.Infrastructure.OpenSearch;
 using SearchService.Api.Startup;
-
-Env.Load(Path.Combine(Directory.GetCurrentDirectory(), "../..", ".env"));
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,7 +9,12 @@ builder.Services.AddControllers();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
-builder.Services.AddOpenSearch(builder.Configuration);
+builder.Services.AddOptions<AppSettings>()
+    .Bind(builder.Configuration)
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services.AddOpenSearch();
 builder.Services.AddApplicationServices();
 
 var app = builder.Build();
