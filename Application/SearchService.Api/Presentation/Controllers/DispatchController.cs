@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using SearchService.Api.Core.Interfaces;
 using SearchService.Api.Models;
+using SearchService.Api.Models.CentralDispatch;
 using SearchService.Api.Models.Search;
 
 namespace SearchService.Api.Presentation.Controllers;
@@ -11,6 +12,7 @@ namespace SearchService.Api.Presentation.Controllers;
 public class DispatchController(
     IDispatchIndexService indexService,
     IDispatchSearchService searchService,
+    ICentralDispatchClient centralDispatchClient,
     IValidator<DispatchWriterEvent> dispatchEventValidator,
     IValidator<DispatchUpdateEvent> dispatchUpdateEventValidator,
     IValidator<DispatchSearchRequestModel> searchValidator,
@@ -44,14 +46,33 @@ public class DispatchController(
         return result.success ? NoContent() : Problem(result.Error);
     }
 
-    [HttpGet("search")]
-    public async Task<IActionResult> Search([FromQuery] DispatchSearchRequestModel request)
+    [HttpPost("search")]
+    public async Task<IActionResult> Search([FromBody] DispatchSearchRequestModel request)
     {
         var validation = await searchValidator.ValidateAsync(request);
         if (!validation.IsValid)
             return BadRequest(validation.Errors);
 
-        var response = await searchService.SearchAsync(request);
+        var (total, ids) = await searchService.SearchAsync(request);
+        var dispatchIds = ids.ToList();
+
+        if (dispatchIds.Count == 0)
+            return Ok(new CentralDispatchBatchResponse());
+
+        var response = await centralDispatchClient.GetBatchAsync(dispatchIds);
+        Console.WriteLine("---------------Result count {0} ----------------", total);
+        return Ok(new CentralDispatchBatchResponse
+        {
+            Found = response.Found,
+            NotFound = response.NotFound,
+            Total = total
+        });
+    }
+
+    [HttpPost("batch/get")]
+    public async Task<IActionResult> GetBatch([FromBody] CentralDispatchBatchRequest request)
+    {
+        var response = await centralDispatchClient.GetBatchAsync(request.DispatchIds);
         return Ok(response);
     }
 

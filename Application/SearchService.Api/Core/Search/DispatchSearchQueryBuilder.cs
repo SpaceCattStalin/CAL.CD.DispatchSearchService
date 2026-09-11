@@ -18,26 +18,22 @@ public class DispatchSearchQueryBuilder : IDispatchSearchQueryBuilder
     /// <param name="request">The dispatch search filters and paging options to translate into a query.</param>
     /// <param name="indexName">The name of the OpenSearch index to target.</param>
     /// <returns>Return object of type SearchRequest of OpenSearch.Client</returns>
-    public SearchRequest<DispatchModel> BuildOpenSearchRequest(DispatchSearchRequestModel request, string indexName) 
+    public SearchRequest<DispatchModel> BuildOpenSearchRequest(DispatchSearchRequestModel request, string indexName)
     {
         // OpenSearch.Client QueryContainer
         var clauses = new List<QueryContainer>();
 
         // Add query clause (MatchQuery from OpenSearch.Client) to clauses
-        if (request.DispatchId.HasValue)
-            clauses.Add(new MatchQuery
-            {
-                // Infer.Field ... come from OpenSearch.Client
-                Field = Infer.Field<DispatchModel, Guid>(d => d.DispatchId),
-                Query = request.DispatchId.Value.ToString()
-            });
 
-        if (!string.IsNullOrEmpty(request.DispatchStatus))
-            clauses.Add(new MatchQuery
+        if (request.DispatchStatus is { Length: > 0 })
+        {
+            clauses.Add(new TermsQuery
             {
                 Field = Infer.Field<DispatchModel, string>(d => d.DispatchStatus),
-                Query = request.DispatchStatus
+                Terms = request.DispatchStatus.Select(st => st)
             });
+        }
+
 
         if (request.PriceTotalMin.HasValue || request.PriceTotalMax.HasValue)
             // Add query clause (NumericRangeQuery from OpenSearch.Client) to clauses
@@ -80,7 +76,9 @@ public class DispatchSearchQueryBuilder : IDispatchSearchQueryBuilder
 
         return new SearchRequest<DispatchModel>(indexName)
         {
-            Query = query
+            Query = query,
+            From = (request.CurrentPage - 1) * request.Size,
+            Size = request.Size
         };
     }
 }

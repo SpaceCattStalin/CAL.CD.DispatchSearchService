@@ -15,6 +15,7 @@ builder.Services.AddOptions<AppSettings>()
     .ValidateOnStart();
 
 builder.Services.AddOpenSearch();
+builder.Services.AddCentralDispatchClient();
 builder.Services.AddApplicationServices();
 
 var app = builder.Build();

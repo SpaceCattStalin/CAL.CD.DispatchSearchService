@@ -4,5 +4,5 @@ namespace SearchService.Api.Core.Interfaces;
 
 public interface IDispatchSearchService
 {
-    Task<IEnumerable<Guid>> SearchAsync(DispatchSearchRequestModel requst);
+    Task<(long Total, IEnumerable<Guid> DispatchIds)> SearchAsync(DispatchSearchRequestModel request);
 }

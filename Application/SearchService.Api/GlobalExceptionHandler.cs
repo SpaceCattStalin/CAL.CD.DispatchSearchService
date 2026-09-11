@@ -68,6 +68,8 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
 
         problem.Extensions["traceId"] = httpContext.TraceIdentifier;
         problem.Extensions["timestamp"] = DateTime.UtcNow;
+        
+        httpContext.Response.StatusCode = problem.Status ?? StatusCodes.Status500InternalServerError;
 
         await _problemDetails.WriteAsync(new ProblemDetailsContext
         {

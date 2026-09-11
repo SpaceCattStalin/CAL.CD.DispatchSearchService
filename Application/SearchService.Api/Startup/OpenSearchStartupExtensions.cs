@@ -19,7 +19,7 @@ public static class OpenSearchStartupExtensions
                 .DisableDirectStreaming()
                 .OnRequestCompleted(apiCall =>
                 {
-                    Console.WriteLine($"{apiCall.HttpMethod} {apiCall.Uri}");
+                    Console.WriteLine($"Logging: {apiCall.HttpMethod} {apiCall.Uri}");
                     if (apiCall.RequestBodyInBytes is not null)
                         Console.WriteLine(System.Text.Encoding.UTF8.GetString(apiCall.RequestBodyInBytes));
                 });

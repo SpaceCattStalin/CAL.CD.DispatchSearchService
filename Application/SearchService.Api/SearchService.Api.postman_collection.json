@@ -1,7 +1,7 @@
 {
 	"info": {
 		"name": "SearchService.Api",
-		"description": "Requests for the OpenSearch-backed SearchService.Api dispatch endpoints (index, delete, search).",
+		"description": "Requests for the OpenSearch-backed SearchService.Api dispatch endpoints (index, delete, search, batch/get). Search is POST-only and no longer filters by DispatchId directly — fetching known ids goes through batch/get instead, which proxies straight to CentralDispatch.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -85,6 +85,25 @@
 							"path": [ "api", "dispatch", "{{dispatchId}}" ]
 						}
 					}
+				},
+				{
+					"name": "Get dispatch batch",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"dispatchIds\": [\n    \"{{dispatchId}}\",\n    \"99999999-9999-9999-9999-999999999999\"\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/dispatch/batch/get",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "dispatch", "batch", "get" ]
+						},
+						"description": "Proxies straight to CentralDispatch's POST api/dispatch/batch/get via SearchService's ICentralDispatchClient — no OpenSearch involved. Body shape: CentralDispatchBatchRequest(DispatchIds). Response shape: CentralDispatchBatchResponse(Found, NotFound). Mixes a real {{dispatchId}} with a bogus id to exercise both arrays."
+					}
 				}
 			]
 		},
@@ -92,24 +111,9 @@
 			"name": "Search",
 			"item": [
 				{
-					"name": "Search by DispatchId (match)",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/dispatch/search?dispatchId={{dispatchId}}",
-							"host": [ "{{baseUrl}}" ],
-							"path": [ "api", "dispatch", "search" ],
-							"query": [
-								{ "key": "dispatchId", "value": "{{dispatchId}}" }
-							]
-						}
-					}
-				},
-				{
 					"name": "Search by DispatchStatus + PriceTotal range",
 					"request": {
-						"method": "GET",
+						"method": "POST",
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/api/dispatch/search?dispatchStatus=Delivered&priceTotalMin=1000&priceTotalMax=2000",
@@ -126,7 +130,7 @@
 				{
 					"name": "Search by PickupDate + DropoffDate range",
 					"request": {
-						"method": "GET",
+						"method": "POST",
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/api/dispatch/search?pickupDateFrom=2026-07-01T00:00:00Z&pickupDateTo=2026-08-31T00:00:00Z&dropoffDateFrom=2026-07-01T00:00:00Z&dropoffDateTo=2026-08-31T00:00:00Z",
@@ -144,7 +148,7 @@
 				{
 					"name": "Search by Vehicle.Vin (partial, case-insensitive)",
 					"request": {
-						"method": "GET",
+						"method": "POST",
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/api/dispatch/search?vehicleVin=1hgcm82",
@@ -159,7 +163,7 @@
 				{
 					"name": "Search - no filters (paginated)",
 					"request": {
-						"method": "GET",
+						"method": "POST",
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/api/dispatch/search?page=1&pageSize=20",
@@ -175,7 +179,7 @@
 				{
 					"name": "Search - invalid range (400)",
 					"request": {
-						"method": "GET",
+						"method": "POST",
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/api/dispatch/search?priceTotalMin=2000&priceTotalMax=1000",
