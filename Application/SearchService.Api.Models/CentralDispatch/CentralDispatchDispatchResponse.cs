@@ -13,6 +13,9 @@ public class CentralDispatchDispatchResponse
     public bool IsSigned { get; init; }
     public CentralDispatchStopResponse? PickupStop { get; init; }
     public CentralDispatchStopResponse? DropoffStop { get; init; }
+    public string? CarrierCompanyName { get; init; }
+    public string? CarrierCompanyPhone { get; init; }
+    public string? CarrierCompanyEmail { get; init; }
     public IEnumerable<CentralDispatchVehicleResponse> Vehicles { get; init; } = [];
     public IEnumerable<CentralDispatchDriverResponse> Drivers { get; init; } = [];
     public DateTime CreatedAt { get; init; }
