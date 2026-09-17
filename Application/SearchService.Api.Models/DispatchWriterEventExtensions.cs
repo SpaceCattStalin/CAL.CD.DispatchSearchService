@@ -5,6 +5,8 @@ public static class DispatchWriterEventExtensions
     public static DispatchModel ToDispatchModel(this DispatchWriterEvent dispatchEvent) => new()
     {
         DispatchId = dispatchEvent.DispatchId,
+        CarrierId = dispatchEvent.CarrierId,
+        ShipperId = dispatchEvent.ShipperId,
         PriceTotal = (double)dispatchEvent.PriceTotal,
         PickupDate = dispatchEvent.PickupDate,
         DropoffDate = dispatchEvent.DropoffDate,
@@ -17,6 +19,8 @@ public static class DispatchWriterEventExtensions
     public static DispatchModel ToDispatchModel(this DispatchUpdateEvent dispatchEvent) => new()
     {
         DispatchId = dispatchEvent.DispatchId,
+        CarrierId = dispatchEvent.CarrierId,
+        ShipperId = dispatchEvent.ShipperId,
         PriceTotal = (double)dispatchEvent.PriceTotal,
         PickupDate = dispatchEvent.PickupDate,
         DropoffDate = dispatchEvent.DropoffDate,

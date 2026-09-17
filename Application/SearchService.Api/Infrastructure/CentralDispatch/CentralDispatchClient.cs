@@ -17,7 +17,7 @@ public class CentralDispatchClient(
             Content = JsonContent.Create(new CentralDispatchBatchRequest { DispatchIds = dispatchIds })
         };
 
-        // Forward the caller's bearer token so CentralDispatch's [Authorize(Policy = DispatchesRead)] check passes.
+        // Forward the frontend caller's bearer token so CentralDispatch's [Authorize(Policy = DispatchesRead)] check passes.
         var incomingAuthHeader = httpContextAccessor.HttpContext?.Request.Headers.Authorization.ToString();
         if (!string.IsNullOrEmpty(incomingAuthHeader) && AuthenticationHeaderValue.TryParse(incomingAuthHeader, out var authHeader))
             httpRequest.Headers.Authorization = authHeader;
