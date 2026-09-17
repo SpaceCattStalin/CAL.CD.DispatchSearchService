@@ -21,6 +21,8 @@ public class DispatchIndexInitializer(IOpenSearchClient client, IOptions<AppSett
                 .Properties(p => p
                     .Keyword(k => k.Name(d => d.DispatchId))
                     .Keyword(k => k.Name(d => d.DispatchStatus))
+                    .Keyword(k => k.Name(d => d.CarrierId))
+                    .Keyword(k => k.Name(d => d.ShipperId))
                     .Number(n => n.Name(d => d.PriceTotal).Type(NumberType.Double))
                     .Date(dt => dt.Name(d => d.PickupDate))
                     .Date(dt => dt.Name(d => d.DropoffDate))

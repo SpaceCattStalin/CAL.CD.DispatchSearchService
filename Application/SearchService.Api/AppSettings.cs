@@ -31,3 +31,18 @@ public class CentralDispatchSettings
     [Required]
     public required string BaseUrl { get; init; }
 }
+
+public class JwtSettings
+{
+    [Required]
+    public required string Issuer { get; init; }
+
+    [Required]
+    public required string Audience { get; init; }
+
+    [Required]
+    public required string SigningKey { get; init; }
+
+    [Range(1, int.MaxValue)]
+    public int ExpiryMinutes { get; init; }
+}

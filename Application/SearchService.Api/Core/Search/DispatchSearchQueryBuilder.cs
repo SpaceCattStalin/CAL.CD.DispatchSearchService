@@ -1,4 +1,5 @@
-﻿using OpenSearch.Client;
+﻿using System.Net.Http.Headers;
+using OpenSearch.Client;
 using SearchService.Api.Models;
 using SearchService.Api.Models.Search;
 
@@ -18,13 +19,31 @@ public class DispatchSearchQueryBuilder : IDispatchSearchQueryBuilder
     /// <param name="request">The dispatch search filters and paging options to translate into a query.</param>
     /// <param name="indexName">The name of the OpenSearch index to target.</param>
     /// <returns>Return object of type SearchRequest of OpenSearch.Client</returns>
-    public SearchRequest<DispatchModel> BuildOpenSearchRequest(DispatchSearchRequestModel request, string indexName)
+    public SearchRequest<DispatchModel> BuildOpenSearchRequest(DispatchSearchRequestModel request, string companyId, string indexName)
     {
         // OpenSearch.Client QueryContainer
         var clauses = new List<QueryContainer>();
+        Console.WriteLine("==========={0}============", companyId);
+        // Add the authentication which is the company to isolate only dispatches belong to the company with the provided id
+        var companyFilter = new BoolQuery
+        {
+            Should = new List<QueryContainer>
+            {
+                new TermQuery
+                {
+                    Field = Infer.Field<DispatchModel, Guid>(d => d.ShipperId),
+                    Value = companyId
+                },
+                new TermQuery
+                {
+                    Field = Infer.Field<DispatchModel, Guid>(d => d.CarrierId),
+                    Value = companyId
+                }
+            },
+            MinimumShouldMatch = 1
+        };
 
         // Add query clause (MatchQuery from OpenSearch.Client) to clauses
-
         if (request.DispatchStatus is { Length: > 0 })
         {
             clauses.Add(new TermsQuery
@@ -71,8 +90,14 @@ public class DispatchSearchQueryBuilder : IDispatchSearchQueryBuilder
             });
 
         // If no queries (clauses) are provided return all indexes, if yes return only indexes that contain provided queries (clauses)
-        QueryContainer query = clauses.Count == 0 ? new MatchAllQuery() : new BoolQuery { Must = clauses };
-
+        QueryContainer query = new BoolQuery
+        {
+            Filter = new List<QueryContainer>
+            {
+                companyFilter
+            },
+            Must = clauses.Count == 0 ? null : clauses
+        };
 
         return new SearchRequest<DispatchModel>(indexName)
         {
