@@ -24,8 +24,16 @@ public class DispatchSearchService(
 
         var tenantId = GetTenantId(token);
 
+        // Call to OpenSearch server
         var searchRequest = queryBuilder.BuildOpenSearchRequest(request, tenantId, _indexName);
         var response = await client.SearchAsync<DispatchModel>(searchRequest);
+
+        var logs = response.Documents.Select(d => d.DispatchId);
+        Console.WriteLine("============= Open Search =============");
+        foreach (var log in logs)
+        {
+            Console.WriteLine("Open Search Id: {0}", log);
+        }
 
         return (response.Total, response.Documents.Select(d => d.DispatchId));
     }

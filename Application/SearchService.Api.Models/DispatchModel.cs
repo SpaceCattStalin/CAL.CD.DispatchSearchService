@@ -10,4 +10,5 @@ public class DispatchModel
     public DateTime DropoffDate { get; set; }
     public string DispatchStatus { get; set; } = string.Empty;
     public List<VehicleModel> Vehicles { get; set; } = [];
+    public DateTime CreatedAt { get; set; }
 }

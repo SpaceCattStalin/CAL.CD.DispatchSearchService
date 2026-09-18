@@ -1,5 +1,6 @@
 ﻿using System.Net.Http.Headers;
 using OpenSearch.Client;
+using OpenSearch.Net;
 using SearchService.Api.Models;
 using SearchService.Api.Models.Search;
 
@@ -23,7 +24,7 @@ public class DispatchSearchQueryBuilder : IDispatchSearchQueryBuilder
     {
         // OpenSearch.Client QueryContainer
         var clauses = new List<QueryContainer>();
-        Console.WriteLine("==========={0}============", companyId);
+
         // Add the authentication which is the company to isolate only dispatches belong to the company with the provided id
         var companyFilter = new BoolQuery
         {
@@ -99,11 +100,25 @@ public class DispatchSearchQueryBuilder : IDispatchSearchQueryBuilder
             Must = clauses.Count == 0 ? null : clauses
         };
 
+        List<SortFields> sortFields = request.SortFields.ToList();
+
+
         return new SearchRequest<DispatchModel>(indexName)
         {
             Query = query,
             From = (request.CurrentPage - 1) * request.Size,
-            Size = request.Size
+            Size = request.Size,
+            Sort = request
+                .SortFields
+                .Select(x =>
+                    (ISort)new FieldSort
+                    {
+                        Field = x.Name,
+                        Order = x.Direction == SortDirection.ASCENDING
+                            ? SortOrder.Ascending
+                            : SortOrder.Descending
+                    })
+                .ToList()
         };
     }
 }

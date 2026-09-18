@@ -26,6 +26,7 @@ public class DispatchIndexInitializer(IOpenSearchClient client, IOptions<AppSett
                     .Number(n => n.Name(d => d.PriceTotal).Type(NumberType.Double))
                     .Date(dt => dt.Name(d => d.PickupDate))
                     .Date(dt => dt.Name(d => d.DropoffDate))
+                    .Date(dt => dt.Name(d => d.CreatedAt))
                     .Object<VehicleModel>(o => o
                         .Name(d => d.Vehicles)
                         .Properties(vp => vp

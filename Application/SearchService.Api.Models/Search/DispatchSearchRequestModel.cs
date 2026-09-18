@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace SearchService.Api.Models.Search;
 
 public class DispatchSearchRequestModel
@@ -12,4 +14,18 @@ public class DispatchSearchRequestModel
     public string? VehicleVin { get; set; }
     public int? Size { get; set; } = 50;
     public int? CurrentPage { get; set; } = 0;
+    public ICollection<SortFields> SortFields { get; set; } = [];
+}
+
+public class SortFields
+{
+    public string Name { get; set; }
+    public SortDirection Direction { get; set; }
+}
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum SortDirection
+{
+    ASCENDING,
+    DESCENDING
 }
