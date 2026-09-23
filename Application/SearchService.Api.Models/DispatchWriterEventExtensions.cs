@@ -13,7 +13,8 @@ public static class DispatchWriterEventExtensions
         DispatchStatus = dispatchEvent.DispatchStatus.ToString(),
         Vehicles = dispatchEvent.Vehicles
             .Select(v => new VehicleModel { Vin = v.Vin ?? string.Empty })
-            .ToList()
+            .ToList(),
+        CreatedAt = dispatchEvent.CreatedAt
     };
 
     public static DispatchModel ToDispatchModel(this DispatchUpdateEvent dispatchEvent) => new()
@@ -27,6 +28,7 @@ public static class DispatchWriterEventExtensions
         DispatchStatus = dispatchEvent.DispatchStatus.ToString(),
         Vehicles = dispatchEvent.Vehicles
           .Select(v => new VehicleModel { Vin = v.Vin ?? string.Empty })
-          .ToList()
+          .ToList(),
+        CreatedAt = dispatchEvent.CreatedAt
     };
 }

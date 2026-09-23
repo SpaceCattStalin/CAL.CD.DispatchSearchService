@@ -11,6 +11,7 @@ public record class DispatchUpdateEvent(
     DateTime PickupDate,
     DateTime DropoffDate,
     DispatchStatus DispatchStatus,
-    IEnumerable<DispatchUpdateVehicle> Vehicles);
+    IEnumerable<DispatchUpdateVehicle> Vehicles,
+    DateTime CreatedAt);
 
 public record class DispatchUpdateVehicle(string? Vin);

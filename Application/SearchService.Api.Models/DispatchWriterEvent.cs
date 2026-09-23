@@ -11,6 +11,7 @@ public record class DispatchWriterEvent(
     DateTime PickupDate,
     DateTime DropoffDate,
     DispatchStatus DispatchStatus,
-    IEnumerable<DispatchWriterVehicle> Vehicles);
+    IEnumerable<DispatchWriterVehicle> Vehicles,
+    DateTime CreatedAt);
 
 public record class DispatchWriterVehicle(string? Vin);

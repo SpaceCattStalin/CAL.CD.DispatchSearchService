@@ -25,11 +25,25 @@ public class CentralDispatchClient(
         var httpResponse = await httpClient.SendAsync(httpRequest, cancellationToken);
 
         Console.WriteLine($"CentralDispatch response: {(int)httpResponse.StatusCode} {httpResponse.StatusCode}");
-        Console.WriteLine(await httpResponse.Content.ReadAsStringAsync(cancellationToken));
+        // Console.WriteLine(await httpResponse.Content.ReadAsStringAsync(cancellationToken));
 
         httpResponse.EnsureSuccessStatusCode();
 
         var result = await httpResponse.Content.ReadFromJsonAsync<CentralDispatchBatchResponse>(cancellationToken);
-        return result ?? new CentralDispatchBatchResponse();
+
+        // Create a Dictionary of the unordered result return from DispatchService
+        var resultById = result?.Found.ToDictionary(x => x.DispatchId);
+
+        // dispaatchIds is ordered by OpenSearch, we map each id with the correct element in the Dictionary above
+        var orderedResult = dispatchIds
+                .Select(id => resultById?[id]);
+
+        return new CentralDispatchBatchResponse
+        {
+            Found = orderedResult!,
+            NotFound = result!.NotFound,
+            Total = result.Total
+        };
+        //return result ?? new CentralDispatchBatchResponse();
     }
 }
