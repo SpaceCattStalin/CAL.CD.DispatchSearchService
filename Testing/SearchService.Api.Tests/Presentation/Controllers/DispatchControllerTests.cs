@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using SearchService.Api.Core.Interfaces;
 using SearchService.Api.Models;
+using SearchService.Api.Models.CentralDispatch;
 using SearchService.Api.Models.Enums;
 using SearchService.Api.Models.Search;
 using SearchService.Api.Presentation.Controllers;
@@ -15,13 +16,17 @@ public class DispatchControllerTests
 {
     private readonly Mock<IDispatchIndexService> _indexService = new();
     private readonly Mock<IDispatchSearchService> _searchService = new();
+    private readonly Mock<ICentralDispatchClient> _centralDispatchClient = new();
     private readonly Mock<IValidator<DispatchWriterEvent>> _dispatchEventValidator = new();
+    private readonly Mock<IValidator<DispatchUpdateEvent>> _dispatchUpdateEventValidator = new();
     private readonly Mock<IValidator<DispatchSearchRequestModel>> _searchValidator = new();
     private readonly Mock<ILogger<DispatchController>> _logger = new();
     private DispatchController CreateController() => new(
         _indexService.Object,
         _searchService.Object,
+        _centralDispatchClient.Object,
         _dispatchEventValidator.Object,
+        _dispatchUpdateEventValidator.Object,
         _searchValidator.Object,
         _logger.Object);
 
@@ -30,11 +35,14 @@ public class DispatchControllerTests
     private static DispatchWriterEvent CreateEvent(Guid? dispatchId = null) => new(
         EventType.Create,
         dispatchId ?? Guid.NewGuid(),
+        Guid.NewGuid(),
+        Guid.NewGuid(),
         100m,
         DateTime.UtcNow,
         DateTime.UtcNow.AddDays(1),
         DispatchStatus.Delivered,
-        [new DispatchWriterVehicle("VIN1")]);
+        [new DispatchWriterVehicle("VIN1")],
+        DateTime.UtcNow);
 
     [Fact]
     public async Task Post_ValidDispatch_ReturnsOkWithId()
@@ -127,23 +135,49 @@ public class DispatchControllerTests
     }
 
     [Fact]
-    public async Task Search_ValidRequest_ReturnsOkWithResults()
+    public async Task Search_ValidRequestWithResults_ReturnsOkWithCentralDispatchBatchResponse()
     {
-        var request = new DispatchSearchRequestModel { DispatchStatus = "Delivered" };
-        var response = new[] { Guid.NewGuid() };
+        var request = new DispatchSearchRequestModel { DispatchStatus = ["Delivered"] };
+        var dispatchIds = new List<Guid> { Guid.NewGuid() };
+        var batchResponse = new CentralDispatchBatchResponse { Found = [], NotFound = [], Total = 1 };
 
         _searchValidator
             .Setup(v => v.ValidateAsync(request, default))
             .ReturnsAsync(new ValidationResult());
-
         _searchService
             .Setup(s => s.SearchAsync(request))
-            .ReturnsAsync(response);
+            .ReturnsAsync((5L, (IEnumerable<Guid>)dispatchIds));
+        _centralDispatchClient
+            .Setup(c => c.GetBatchAsync(It.IsAny<IEnumerable<Guid>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(batchResponse);
 
         var result = await CreateController().Search(request);
 
         var ok = Assert.IsType<OkObjectResult>(result);
-        Assert.Same(response, ok.Value);
+        var value = Assert.IsType<CentralDispatchBatchResponse>(ok.Value);
+        Assert.Equal(5, value.Total);
+    }
+
+    [Fact]
+    public async Task Search_ValidRequestWithNoResults_ReturnsOkWithEmptyResponseWithoutCallingCentralDispatch()
+    {
+        var request = new DispatchSearchRequestModel();
+
+        _searchValidator
+            .Setup(v => v.ValidateAsync(request, default))
+            .ReturnsAsync(new ValidationResult());
+        _searchService
+            .Setup(s => s.SearchAsync(request))
+            .ReturnsAsync((0L, Enumerable.Empty<Guid>()));
+
+        var result = await CreateController().Search(request);
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var value = Assert.IsType<CentralDispatchBatchResponse>(ok.Value);
+        Assert.Empty(value.Found);
+        _centralDispatchClient.Verify(
+            c => c.GetBatchAsync(It.IsAny<IEnumerable<Guid>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]

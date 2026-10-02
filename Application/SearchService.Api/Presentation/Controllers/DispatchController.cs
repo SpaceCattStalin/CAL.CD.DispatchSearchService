@@ -1,5 +1,7 @@
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SearchService.Api.Authentication;
 using SearchService.Api.Core.Interfaces;
 using SearchService.Api.Models;
 using SearchService.Api.Models.CentralDispatch;
@@ -19,6 +21,7 @@ public class DispatchController(
     ILogger<DispatchController> logger) : ControllerBase
 {
     [HttpPost]
+    [Authorize(Policy = PermissionNames.DispatchesCreate)]
     public async Task<IActionResult> Post([FromBody] DispatchWriterEvent dispatchEvent)
     {
         var validation = await dispatchEventValidator.ValidateAsync(dispatchEvent);
@@ -36,6 +39,7 @@ public class DispatchController(
     }
 
     [HttpDelete("{dispatchId:guid}")]
+    [Authorize(Policy = PermissionNames.DispatchesDelete)]
     public async Task<IActionResult> Delete(Guid dispatchId)
     {
         var result = await indexService.DeleteAsync(dispatchId);
@@ -47,6 +51,7 @@ public class DispatchController(
     }
 
     [HttpPost("search")]
+    [Authorize(Policy = PermissionNames.DispatchesRead)]
     public async Task<IActionResult> Search([FromBody] DispatchSearchRequestModel request)
     {
         var validation = await searchValidator.ValidateAsync(request);
@@ -69,14 +74,15 @@ public class DispatchController(
         });
     }
 
-    [HttpPost("batch/get")]
-    public async Task<IActionResult> GetBatch([FromBody] CentralDispatchBatchRequest request)
-    {
-        var response = await centralDispatchClient.GetBatchAsync(request.DispatchIds);
-        return Ok(response);
-    }
+    // [HttpPost("batch/get")]
+    // public async Task<IActionResult> GetBatch([FromBody] CentralDispatchBatchRequest request)
+    // {
+    //     var response = await centralDispatchClient.GetBatchAsync(request.DispatchIds);
+    //     return Ok(response);
+    // }
 
     [HttpPut]
+    [Authorize(Policy = PermissionNames.DispatchesUpdate)]
     public async Task<IActionResult> Update([FromBody] DispatchUpdateEvent dispatchEvent)
     {
         var validation = await dispatchUpdateEventValidator.ValidateAsync(dispatchEvent);
@@ -92,9 +98,9 @@ public class DispatchController(
     }
 
     [HttpPut("batch-update")]
+    [Authorize(Policy = PermissionNames.DispatchesSyncJobUpdate)]
     public async Task<IActionResult> BatchUpdate(DispatchBatchUpdateRequest request)
     {
-        // To do add validation for request
         var result = indexService.BulkUpdateAsync(request.Documents);
 
         logger.LogInformation("Request success? {Result}", result);

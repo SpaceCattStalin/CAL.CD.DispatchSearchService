@@ -29,11 +29,6 @@ public class DispatchSearchService(
         var response = await client.SearchAsync<DispatchModel>(searchRequest);
 
         var logs = response.Documents.Select(d => d.DispatchId);
-        Console.WriteLine("============= Open Search =============");
-        foreach (var log in logs)
-        {
-            Console.WriteLine("Open Search Id: {0}", log);
-        }
 
         return (response.Total, response.Documents.Select(d => d.DispatchId));
     }

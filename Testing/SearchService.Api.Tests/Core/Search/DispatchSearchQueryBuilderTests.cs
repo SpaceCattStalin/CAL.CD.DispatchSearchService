@@ -1,5 +1,6 @@
 using OpenSearch.Client;
 using SearchService.Api.Core.Search;
+using SearchService.Api.Models;
 using SearchService.Api.Models.Search;
 
 namespace SearchService.Api.Tests.Core.Search;
@@ -7,6 +8,10 @@ namespace SearchService.Api.Tests.Core.Search;
 public class DispatchSearchQueryBuilderTests
 {
     private readonly DispatchSearchQueryBuilder _builder = new();
+    private static readonly string CompanyId = Guid.NewGuid().ToString();
+
+    private SearchRequest<DispatchModel> Build(DispatchSearchRequestModel request) =>
+        _builder.BuildOpenSearchRequest(request, CompanyId, "dispatches");
 
     private static IQueryContainer AsContainer(QueryContainer? query)
     {
@@ -31,13 +36,18 @@ public class DispatchSearchQueryBuilderTests
     }
 
     [Fact]
-    public void Build_NoFilters_ReturnsMatchAllQuery()
+    public void Build_NoFilters_ReturnsBoolQueryWithOnlyCompanyFilter()
     {
+        // The company-scoping filter is always applied, even with no other filters set,
+        // so the query is always a BoolQuery (never a bare match_all) with an empty Must.
         var request = new DispatchSearchRequestModel();
 
-        var result = _builder.BuildOpenSearchRequest(request, "dispatches");
+        var result = Build(request);
 
-        Assert.NotNull(AsContainer(result.Query).MatchAll);
+        var boolQuery = AsContainer(result.Query).Bool;
+        Assert.NotNull(boolQuery);
+        Assert.Null(boolQuery!.Must);
+        Assert.NotNull(boolQuery.Filter);
     }
 
     // [Fact]
@@ -55,16 +65,16 @@ public class DispatchSearchQueryBuilderTests
     // }
 
     [Fact]
-    public void Build_DispatchStatusSet_ReturnsMatchQueryOnDispatchStatus()
+    public void Build_DispatchStatusSet_ReturnsTermsQueryOnDispatchStatus()
     {
-        var request = new DispatchSearchRequestModel { DispatchStatus = "Delivered" };
+        var request = new DispatchSearchRequestModel { DispatchStatus = ["Delivered"] };
 
-        var result = _builder.BuildOpenSearchRequest(request, "dispatches");
+        var result = Build(request);
 
-        var match = GetSingleClause(result.Query).Match;
-        Assert.NotNull(match);
-        Assert.Equal("d => d.DispatchStatus", match!.Field!.Expression!.ToString());
-        Assert.Equal("Delivered", match.Query);
+        var terms = GetSingleClause(result.Query).Terms;
+        Assert.NotNull(terms);
+        Assert.Equal("d => d.DispatchStatus", terms!.Field!.Expression!.ToString());
+        Assert.Contains("Delivered", terms.Terms!.Select(t => t!.ToString()));
     }
 
     [Fact]
@@ -72,7 +82,7 @@ public class DispatchSearchQueryBuilderTests
     {
         var request = new DispatchSearchRequestModel { PriceTotalMin = 100, PriceTotalMax = 500 };
 
-        var result = _builder.BuildOpenSearchRequest(request, "dispatches");
+        var result = Build(request);
 
         var range = GetSingleClause(result.Query).Range;
         Assert.NotNull(range);
@@ -88,7 +98,7 @@ public class DispatchSearchQueryBuilderTests
     {
         var request = new DispatchSearchRequestModel { PriceTotalMin = 100 };
 
-        var result = _builder.BuildOpenSearchRequest(request, "dispatches");
+        var result = Build(request);
 
         var numeric = Assert.IsAssignableFrom<INumericRangeQuery>(GetSingleClause(result.Query).Range);
         Assert.Equal(100, numeric.GreaterThanOrEqualTo);
@@ -102,7 +112,7 @@ public class DispatchSearchQueryBuilderTests
         var to = new DateTime(2026, 7, 31, 0, 0, 0, DateTimeKind.Utc);
         var request = new DispatchSearchRequestModel { PickupDateFrom = from, PickupDateTo = to };
 
-        var result = _builder.BuildOpenSearchRequest(request, "dispatches");
+        var result = Build(request);
 
         var range = GetSingleClause(result.Query).Range;
         var date = Assert.IsAssignableFrom<IDateRangeQuery>(range);
@@ -118,7 +128,7 @@ public class DispatchSearchQueryBuilderTests
         var from = new DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc);
         var request = new DispatchSearchRequestModel { DropoffDateFrom = from };
 
-        var result = _builder.BuildOpenSearchRequest(request, "dispatches");
+        var result = Build(request);
 
         var range = GetSingleClause(result.Query).Range;
         var date = Assert.IsAssignableFrom<IDateRangeQuery>(range);
@@ -133,7 +143,7 @@ public class DispatchSearchQueryBuilderTests
     {
         var request = new DispatchSearchRequestModel { VehicleVin = "1HGCM82" };
 
-        var result = _builder.BuildOpenSearchRequest(request, "dispatches");
+        var result = Build(request);
 
         var wildcard = GetSingleClause(result.Query).Wildcard;
         Assert.NotNull(wildcard);
@@ -147,12 +157,12 @@ public class DispatchSearchQueryBuilderTests
     {
         var request = new DispatchSearchRequestModel
         {
-            DispatchStatus = "Delivered",
+            DispatchStatus = ["Delivered"],
             PriceTotalMin = 100,
             VehicleVin = "1HGCM82"
         };
 
-        var result = _builder.BuildOpenSearchRequest(request, "dispatches");
+        var result = Build(request);
 
         var boolQuery = AsContainer(result.Query).Bool;
         Assert.NotNull(boolQuery);

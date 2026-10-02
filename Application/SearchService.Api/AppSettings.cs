@@ -6,7 +6,9 @@ public class AppSettings
 {
     [Required]
     public required OpenSearchSettings OpenSearch { get; init; }
-
+    [Required]
+    public required JwtSettings Jwt { get; init; }
+    
     [Required]
     public required CentralDispatchSettings CentralDispatch { get; init; }
 }

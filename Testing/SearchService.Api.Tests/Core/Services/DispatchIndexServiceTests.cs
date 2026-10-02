@@ -17,6 +17,16 @@ public class DispatchIndexServiceTests
                 Username = "test",
                 Password = "test",
                 IndexName = "dispatches"
+            },
+            Jwt = new JwtSettings
+            {
+                Issuer = "CentralDispatch",
+                Audience = "CentralDispatch",
+                SigningKey = "test_signing_key_min_32_chars_long_0000"
+            },
+            CentralDispatch = new CentralDispatchSettings
+            {
+                BaseUrl = "https://central-dispatch.test"
             }
         });
 

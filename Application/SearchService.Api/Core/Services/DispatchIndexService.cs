@@ -44,9 +44,6 @@ public class DispatchIndexService(IOpenSearchClient client, IOptions<AppSettings
 
     public async Task<DispatchUpdateResult> UpdateAsync(DispatchModel dispatch)
     {
-        // Include .Id(dispatch.DispatchId) will make the OpenSearchClient call 
-        // OpenSearch server with the PUT action. This will make the OpenSearch server to 
-        // find and update the document
         var response = await client.IndexAsync(dispatch,
             i => i.Index(_indexName).Id(dispatch.DispatchId));
 
